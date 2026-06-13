@@ -50,6 +50,40 @@ app.post('/api/send-email', async (req, res) => {
         <p style="color: #666;">Thank you,<br/><strong>Andhra Blood Connect Admin Team</strong></p>
       </div>
     `;
+  } else if (status === 'Donated') {
+    subject = 'Your Blood Donation Saved Lives Today 🩸 - Andhra Blood Connect';
+    htmlContent = `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        <div style="background-color: #c62828; padding: 30px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 24px; letter-spacing: 1px;">ANDHRA BLOOD CONNECT</h1>
+        </div>
+        <div style="padding: 40px 30px; background-color: #ffffff;">
+          <h2 style="color: #333; margin-top: 0; font-size: 22px;">Dear ${hospitalName},</h2>
+          <p style="color: #555; font-size: 16px; line-height: 1.6;">
+            On behalf of the entire community and the patients whose lives you've touched today, we want to extend our deepest gratitude for your selfless blood donation.
+          </p>
+          <div style="background-color: #fff3e0; border-left: 4px solid #ef6c00; padding: 15px 20px; margin: 25px 0; border-radius: 4px;">
+            <p style="color: #e65100; margin: 0; font-weight: bold; font-size: 15px;">
+              "A single drop of your blood can be a drop of life for someone else."
+            </p>
+          </div>
+          <p style="color: #555; font-size: 16px; line-height: 1.6;">
+            Your donation has been officially verified and successfully recorded in our system. Because of heroes like you, our hospitals are equipped to handle critical emergencies and save lives.
+          </p>
+          <p style="color: #555; font-size: 16px; line-height: 1.6;">
+            Please ensure you rest well and stay hydrated today. You will be eligible for your next donation in 90 days. We look forward to welcoming you back.
+          </p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
+          <p style="color: #888; font-size: 14px; margin: 0;">
+            With profound gratitude,<br/>
+            <strong style="color: #333;">The Andhra Blood Connect Administration</strong>
+          </p>
+        </div>
+        <div style="background-color: #f9f9f9; padding: 15px; text-align: center; font-size: 12px; color: #aaa;">
+          &copy; ${new Date().getFullYear()} Andhra Blood Connect. All rights reserved.
+        </div>
+      </div>
+    `;
   } else if (status === 'ResetPassword') {
     subject = 'Password Reset - Andhra Blood Connect';
     htmlContent = `

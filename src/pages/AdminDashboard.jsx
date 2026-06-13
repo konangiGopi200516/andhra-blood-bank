@@ -4,6 +4,7 @@ import BloodInventory from './BloodInventory';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('Overview');
+  const [processedDonors, setProcessedDonors] = useState({});
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('adminAuth') === 'true');
@@ -253,6 +254,71 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleRecordDonation = async (donor) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const newDonationsCount = (parseInt(donor.donations) || 0) + 1;
+      
+      await fetch(`https://blood-bank-3b1cc-default-rtdb.firebaseio.com/donors/${donor.id}.json`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          donations: newDonationsCount,
+          lastDonation: today
+        })
+      });
+      fetchDonors();
+    } catch(e) {
+      console.error(e);
+    }
+  };
+
+  const handleAdminDonatedAction = async (donor, hasDonated) => {
+    setProcessedDonors(prev => ({ ...prev, [donor.id]: hasDonated ? 'Donated' : 'Not Donated' }));
+
+    if (hasDonated) {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const newDonationsCount = (parseInt(donor.donations) || 0) + 1;
+        
+        await fetch(`https://blood-bank-3b1cc-default-rtdb.firebaseio.com/donors/${donor.id}.json`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            donations: newDonationsCount,
+            lastDonation: today
+          })
+        });
+
+        // Send Email
+        const emailAddress = donor.email || 'gopikonangi8@gmail.com';
+        const emailRes = await fetch('https://andhra-blood-bank-api.vercel.app/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: emailAddress,
+            hospitalName: donor.name,
+            bloodGroup: donor.bg,
+            status: 'Donated'
+          })
+        });
+
+        if(emailRes.ok) {
+          alert(`Donation recorded and Thank You email sent to ${donor.name}!`);
+        } else {
+          alert(`Donation recorded, but failed to send email.`);
+        }
+
+        fetchDonors();
+      } catch(e) {
+        console.error(e);
+        alert('Error recording donation.');
+      }
+    } else {
+      alert(`Marked ${donor.name} as Not Donated.`);
+    }
+  };
+
   const handleAddHospital = () => {
     if (!newHospital.name) return;
     if (editHospitalId) {
@@ -315,6 +381,7 @@ const AdminDashboard = () => {
         <ul className="sidebar-menu">
           <li><a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('Overview'); }} className={`sidebar-link ${activeTab === 'Overview' ? 'active' : ''}`}><Activity size={20} /> Overview</a></li>
           <li><a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('Donors'); }} className={`sidebar-link ${activeTab === 'Donors' ? 'active' : ''}`}><Users size={20} /> Donors</a></li>
+          <li><a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('Donated Donors'); }} className={`sidebar-link ${activeTab === 'Donated Donors' ? 'active' : ''}`}><CheckCircle size={20} /> Donated Donors</a></li>
           <li><a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('Hospitals'); }} className={`sidebar-link ${activeTab === 'Hospitals' ? 'active' : ''}`}><Activity size={20} /> Hospitals</a></li>
           <li><a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('Blood Inventory'); }} className={`sidebar-link ${activeTab === 'Blood Inventory' ? 'active' : ''}`}><Droplet size={20} /> Blood Inventory</a></li>
           <li><a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('Requests'); }} className={`sidebar-link ${activeTab === 'Requests' ? 'active' : ''}`}><FileText size={20} /> Requests</a></li>
@@ -510,6 +577,9 @@ const AdminDashboard = () => {
                         }}>{d.status}</span>
                       </td>
                       <td style={{ padding: '16px 8px' }}>
+                        <button onClick={() => handleRecordDonation(d)} style={{ background: '#e8f5e9', border: '1px solid #2e7d32', color: '#2e7d32', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', marginRight: '12px', fontSize: '0.8rem', fontWeight: 'bold' }} title="Record new donation today">
+                          + Record
+                        </button>
                         <button onClick={() => handleEditDonor(d)} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', marginRight: '12px' }} title="Edit">
                           <Pencil size={18} />
                         </button>
@@ -630,6 +700,62 @@ const AdminDashboard = () => {
                  </div>
                </div>
              </div>
+          </div>
+        )}
+
+        {activeTab === 'Donated Donors' && (
+          <div className="animate-fade-in" style={{ background: 'white', borderRadius: 'var(--radius-lg)', padding: '32px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border)' }}>
+            <h3 style={{ marginBottom: '24px', color: 'var(--dark)' }}>Track Donated Donors</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>Select whether a registered donor has successfully donated blood or not. Marking "Donated" will automatically send them a Thank You email.</p>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead style={{ borderBottom: '2px solid #f0f0f0' }}>
+                <tr>
+                  <th style={{ padding: '12px 8px', color: 'var(--text-muted)' }}>Donor Name</th>
+                  <th style={{ padding: '12px 8px', color: 'var(--text-muted)' }}>Blood Group</th>
+                  <th style={{ padding: '12px 8px', color: 'var(--text-muted)' }}>Email/Contact</th>
+                  <th style={{ padding: '12px 8px', color: 'var(--text-muted)' }}>Donation Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {donors.map((d) => (
+                  <tr key={d.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                    <td style={{ padding: '16px 8px', fontWeight: '500' }}>{d.name}</td>
+                    <td style={{ padding: '16px 8px', fontWeight: 'bold', color: 'var(--primary)' }}>{d.bg}</td>
+                    <td style={{ padding: '16px 8px' }}>{d.email || d.mobile || 'No Contact'}</td>
+                    <td style={{ padding: '16px 8px', display: 'flex', gap: '8px' }}>
+                      {processedDonors[d.id] ? (
+                        <span style={{ 
+                          color: processedDonors[d.id] === 'Donated' ? '#2e7d32' : '#d32f2f', 
+                          fontWeight: 'bold', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px',
+                          background: processedDonors[d.id] === 'Donated' ? '#e8f5e9' : '#ffebee',
+                          padding: '6px 12px', borderRadius: '4px'
+                        }}>
+                          {processedDonors[d.id] === 'Donated' ? <CheckCircle size={16} /> : null} 
+                          {processedDonors[d.id]}
+                        </span>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={() => handleAdminDonatedAction(d, true)} 
+                            className="btn" 
+                            style={{ background: '#2e7d32', color: 'white', border: 'none', padding: '6px 12px', fontSize: '0.85rem' }}
+                          >
+                            <CheckCircle size={14} style={{ marginRight: '4px' }} /> Donated
+                          </button>
+                          <button 
+                            onClick={() => handleAdminDonatedAction(d, false)} 
+                            className="btn" 
+                            style={{ background: '#d32f2f', color: 'white', border: 'none', padding: '6px 12px', fontSize: '0.85rem' }}
+                          >
+                            Not Donated
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 
