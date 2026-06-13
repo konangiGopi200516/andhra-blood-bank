@@ -78,6 +78,15 @@ const DonorDashboard = () => {
     setShowScheduleModal(true);
   };
 
+  const handleMarkAsDonated = (id) => {
+    setDonationHistory(prev => prev.map(d => {
+      if (d.id === id) {
+        return { ...d, status: 'Completed', amount: '450ml' };
+      }
+      return d;
+    }));
+  };
+
   const completedDonationsCount = donationHistory.filter(d => d.status === 'Completed').length;
   const lastCompletedDonation = donationHistory.find(d => d.status === 'Completed');
 
@@ -215,13 +224,22 @@ const DonorDashboard = () => {
                     <p style={{ margin: '0 0 16px 0', color: 'var(--dark)', fontSize: '0.95rem', display: 'flex', gap: '8px' }}>
                       <Droplet size={16} color="#2e7d32" /> <strong>Location:</strong> {upcomingDonation.location}
                     </p>
-                    <button 
-                      className="btn" 
-                      style={{ width: '100%', padding: '10px', fontSize: '0.9rem', backgroundColor: '#2e7d32', color: 'white', border: 'none' }}
-                      onClick={() => handleViewSchedule(upcomingDonation)}
-                    >
-                      View Details
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        className="btn" 
+                        style={{ flex: 1, padding: '10px', fontSize: '0.9rem', backgroundColor: '#2e7d32', color: 'white', border: 'none' }}
+                        onClick={() => handleViewSchedule(upcomingDonation)}
+                      >
+                        Details
+                      </button>
+                      <button 
+                        className="btn" 
+                        style={{ flex: 1, padding: '10px', fontSize: '0.9rem', backgroundColor: '#1976d2', color: 'white', border: 'none' }}
+                        onClick={() => handleMarkAsDonated(upcomingDonation.id)}
+                      >
+                        Mark Donated
+                      </button>
+                    </div>
                   </>
                 ) : (
                   <div style={{ textAlign: 'center', padding: '16px 0' }}>
