@@ -16,6 +16,10 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+app.get('/', (req, res) => {
+  res.send('Andhra Blood Connect API is running securely.');
+});
+
 app.post('/api/send-email', async (req, res) => {
   const { to, hospitalName, bloodGroup, units, status } = req.body;
 
