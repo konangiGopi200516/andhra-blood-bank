@@ -116,7 +116,7 @@ const DonorAuth = () => {
       }
 
       if (userExists) {
-        const emailResponse = await fetch('https://andhra-blood-bank.vercel.app/api/send-email', {
+        const emailResponse = await fetch('https://andhra-blood-bank-api.vercel.app/api/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
