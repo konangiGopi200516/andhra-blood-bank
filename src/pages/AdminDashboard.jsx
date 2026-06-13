@@ -9,16 +9,34 @@ const AdminDashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('adminAuth') === 'true');
   const [passwordInput, setPasswordInput] = useState('');
 
-  const [donors, setDonors] = useState(() => {
-    const saved = localStorage.getItem('admin_donors_v2');
-    return saved ? JSON.parse(saved) : [
-      { id: 1, name: 'Rahul Sharma', bg: 'O+', donations: 5, last: '2023-09-12', status: 'Eligible' },
-      { id: 2, name: 'Priya Patel', bg: 'A-', donations: 2, last: '2023-11-05', status: 'Eligible' },
-      { id: 3, name: 'Amit Kumar', bg: 'B+', donations: 8, last: '2023-05-20', status: 'Eligible' },
-      { id: 4, name: 'Sneha Reddy', bg: 'AB+', donations: 1, last: '2023-12-01', status: 'Eligible' },
-      { id: 5, name: 'Vikram Singh', bg: 'O-', donations: 12, last: '2023-08-14', status: 'Eligible' },
-    ];
-  });
+  const [donors, setDonors] = useState([]);
+
+  const fetchDonors = async () => {
+    try {
+      const response = await fetch('https://blood-bank-3b1cc-default-rtdb.firebaseio.com/donors.json');
+      const data = await response.json();
+      if (data) {
+        const mappedDonors = Object.keys(data).map(key => ({
+          id: key,
+          name: data[key].fullName || data[key].name || 'Unknown',
+          bg: data[key].bloodGroup || 'Unknown',
+          donations: data[key].donations || 0,
+          last: data[key].lastDonation || 'Never',
+          status: 'Eligible',
+          ...data[key]
+        }));
+        setDonors(mappedDonors);
+      } else {
+        setDonors([]);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    fetchDonors();
+  }, []);
 
   const [hospitals, setHospitals] = useState(() => {
     const saved = localStorage.getItem('admin_hospitals_v3');
@@ -55,9 +73,7 @@ const AdminDashboard = () => {
   const [newHospital, setNewHospital] = useState({ name: '', loc: '', contact: '', status: 'Active' });
   const [editHospitalId, setEditHospitalId] = useState(null);
 
-  useEffect(() => {
-    localStorage.setItem('admin_donors_v2', JSON.stringify(donors));
-  }, [donors]);
+
 
   useEffect(() => {
     localStorage.setItem('admin_hospitals_v3', JSON.stringify(hospitals));
@@ -126,7 +142,7 @@ const AdminDashboard = () => {
         }
       } catch (emailErr) {
         console.error('Failed to send approval email:', emailErr);
-        alert("Could not connect to the Node.js email server. Make sure it is running on port 5000.");
+        alert("Could not connect to the email API. Ensure your backend Vercel URL is correct and running.");
       }
     } catch (err) {
       console.error(err);
@@ -187,15 +203,38 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleAddDonor = () => {
+  const handleAddDonor = async () => {
     if (!newDonor.name) return;
-    if (editDonorId) {
-      setDonors(donors.map(d => d.id === editDonorId ? { ...newDonor, id: editDonorId } : d));
-      setEditDonorId(null);
-    } else {
-      setDonors([...donors, { ...newDonor, id: Date.now() }]);
+    try {
+      if (editDonorId) {
+        await fetch(`https://blood-bank-3b1cc-default-rtdb.firebaseio.com/donors/${editDonorId}.json`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            fullName: newDonor.name,
+            bloodGroup: newDonor.bg,
+            donations: newDonor.donations,
+            lastDonation: newDonor.last
+          })
+        });
+        setEditDonorId(null);
+      } else {
+        await fetch('https://blood-bank-3b1cc-default-rtdb.firebaseio.com/donors.json', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fullName: newDonor.name,
+            bloodGroup: newDonor.bg,
+            donations: newDonor.donations,
+            lastDonation: newDonor.last
+          })
+        });
+      }
+      setNewDonor({ name: '', bg: '', donations: 0, last: '', status: 'Eligible' });
+      fetchDonors();
+    } catch(e) {
+      console.error(e);
     }
-    setNewDonor({ name: '', bg: '', donations: 0, last: '', status: 'Eligible' });
   };
 
   const handleEditDonor = (d) => {
@@ -203,8 +242,15 @@ const AdminDashboard = () => {
     setEditDonorId(d.id);
   };
 
-  const handleDeleteDonor = (id) => {
-    setDonors(donors.filter(d => d.id !== id));
+  const handleDeleteDonor = async (id) => {
+    try {
+      await fetch(`https://blood-bank-3b1cc-default-rtdb.firebaseio.com/donors/${id}.json`, {
+        method: 'DELETE'
+      });
+      fetchDonors();
+    } catch(e) {
+      console.error(e);
+    }
   };
 
   const handleAddHospital = () => {
