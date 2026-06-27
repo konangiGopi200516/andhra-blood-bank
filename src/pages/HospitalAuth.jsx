@@ -37,11 +37,14 @@ const HospitalAuth = () => {
       const response = await fetch(FIREBASE_URL);
       const data = await response.json();
 
-      if (data) {
+      if (data && data.error) {
+        setError(`Database error: ${data.error}. Please check Firebase rules or data access.`);
+      } else if (data) {
         // Find if hospital exists with matching email and password, ignoring whitespace/case
         const hospitals = Object.values(data);
         const userExists = hospitals.find(h => 
-          h.email?.trim().toLowerCase() === formData.email.trim().toLowerCase() && 
+          h && h.email &&
+          h.email.trim().toLowerCase() === formData.email.trim().toLowerCase() && 
           h.password === formData.password
         );
 

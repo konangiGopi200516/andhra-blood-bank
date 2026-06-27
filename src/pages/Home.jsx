@@ -35,7 +35,7 @@ const Home = () => {
             Find Blood Instantly During Emergencies. Join the largest AI-powered network connecting donors with hospitals in real-time.
           </p>
           <div className="hero-actions" style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/donor/dashboard" className="btn btn-primary" style={{ padding: '16px 32px', fontSize: '1.1rem' }}>
+            <Link to="/donor/auth" className="btn btn-primary" style={{ padding: '16px 32px', fontSize: '1.1rem' }}>
               <Droplet size={24} />
               Donate Blood
             </Link>

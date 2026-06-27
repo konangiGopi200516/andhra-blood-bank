@@ -37,9 +37,13 @@ const ResetPassword = () => {
       // Check donors
       const donorsRes = await fetch('https://blood-bank-3b1cc-default-rtdb.firebaseio.com/donors.json');
       const donorsData = await donorsRes.json();
-      if (donorsData) {
+      if (donorsData && donorsData.error) {
+        setError(`Database error: ${donorsData.error}. Please check Firebase rules.`);
+        setLoading(false);
+        return;
+      } else if (donorsData) {
         for (const [key, user] of Object.entries(donorsData)) {
-          if (user.email?.trim().toLowerCase() === email.trim().toLowerCase()) {
+          if (user && user.email && user.email.trim().toLowerCase() === email.trim().toLowerCase()) {
             await fetch(`https://blood-bank-3b1cc-default-rtdb.firebaseio.com/donors/${key}.json`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
@@ -53,9 +57,9 @@ const ResetPassword = () => {
       // Check hospitals
       const hospRes = await fetch('https://blood-bank-3b1cc-default-rtdb.firebaseio.com/hospitals.json');
       const hospData = await hospRes.json();
-      if (hospData) {
+      if (hospData && !hospData.error) {
         for (const [key, user] of Object.entries(hospData)) {
-          if (user.email?.trim().toLowerCase() === email.trim().toLowerCase()) {
+          if (user && user.email && user.email.trim().toLowerCase() === email.trim().toLowerCase()) {
             await fetch(`https://blood-bank-3b1cc-default-rtdb.firebaseio.com/hospitals/${key}.json`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },

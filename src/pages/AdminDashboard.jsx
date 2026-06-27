@@ -16,15 +16,20 @@ const AdminDashboard = () => {
     try {
       const response = await fetch('https://blood-bank-3b1cc-default-rtdb.firebaseio.com/donors.json');
       const data = await response.json();
-      if (data) {
-        const mappedDonors = Object.keys(data).map(key => ({
-          id: key,
-          name: data[key].fullName || data[key].name || 'Unknown',
-          bg: data[key].bloodGroup || 'Unknown',
-          donations: data[key].donations || 0,
-          last: data[key].lastDonation || 'Never',
-          status: 'Eligible',
-          ...data[key]
+      if (data && data.error) {
+        console.error('Firebase error:', data.error);
+        setDonors([]);
+      } else if (data) {
+        const mappedDonors = Object.keys(data)
+          .filter(key => data[key] !== null)
+          .map(key => ({
+            id: key,
+            name: data[key].fullName || data[key].name || 'Unknown',
+            bg: data[key].bloodGroup || 'Unknown',
+            donations: data[key].donations || 0,
+            last: data[key].lastDonation || 'Never',
+            status: 'Eligible',
+            ...data[key]
         }));
         setDonors(mappedDonors);
       } else {
@@ -86,11 +91,16 @@ const AdminDashboard = () => {
     try {
       const response = await fetch(FIREBASE_URL);
       const data = await response.json();
-      if (data) {
-        const reqArray = Object.keys(data).map(key => ({
-          id: key,
-          ...data[key]
-        })).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      if (data && data.error) {
+        console.error('Firebase error:', data.error);
+        setRequests([]);
+      } else if (data) {
+        const reqArray = Object.keys(data)
+          .filter(key => data[key] !== null)
+          .map(key => ({
+            id: key,
+            ...data[key]
+          })).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         setRequests(reqArray);
       }
     } catch (err) {

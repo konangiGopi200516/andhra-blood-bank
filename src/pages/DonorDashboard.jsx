@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Calendar, Droplet, Clock, Award, Activity, X } from 'lucide-react';
 
 const DonorDashboard = () => {
@@ -8,6 +9,10 @@ const DonorDashboard = () => {
   
   // Read donor from local storage
   const storedDonor = JSON.parse(localStorage.getItem('donorUser') || 'null');
+
+  if (!storedDonor) {
+    return <Navigate to="/donor/auth" replace />;
+  }
 
   // Generate unique mock history based on the user's email so it varies per user
   const generateInitialHistory = () => {

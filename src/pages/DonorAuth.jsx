@@ -37,11 +37,14 @@ const DonorAuth = () => {
       const response = await fetch(FIREBASE_URL);
       const data = await response.json();
 
-      if (data) {
+      if (data && data.error) {
+        setError(`Database error: ${data.error}. Please check Firebase rules or data access.`);
+      } else if (data) {
         // Find if donor exists with matching email and password, ignoring whitespace/case
         const donors = Object.values(data);
         const userExists = donors.find(d => 
-          d.email?.trim().toLowerCase() === formData.email.trim().toLowerCase() && 
+          d && d.email &&
+          d.email.trim().toLowerCase() === formData.email.trim().toLowerCase() && 
           d.password === formData.password
         );
 

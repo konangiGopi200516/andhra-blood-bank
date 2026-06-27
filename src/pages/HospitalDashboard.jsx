@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { Building, Activity, Droplet, PlusCircle, AlertCircle, Clock, Phone, MapPin } from 'lucide-react';
 
 const HospitalDashboard = () => {
@@ -8,8 +8,13 @@ const HospitalDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   // Get logged in hospital details
+  const storedUser = localStorage.getItem('hospitalUser');
+  if (!storedUser) {
+    return <Navigate to="/hospital/auth" replace />;
+  }
+
   const [hospital, setHospital] = useState({
-    name: "Demo Hospital",
+    name: "Loading...",
     location: "Loading...",
     contact: "Loading...",
     status: "Active"
